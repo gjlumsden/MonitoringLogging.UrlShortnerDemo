@@ -37,7 +37,7 @@ namespace Training.UrlShortner.Functions.Services
             {
                 await Task.WhenAll(tasks);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 // I am redirecting to a non-existend host so this is expected
             }
