@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
+using Microsoft.ApplicationInsights;
 using Microsoft.Build.Framework;
 using Microsoft.Extensions.Logging;
 using Training.UrlShortner.Functions.Configuration;
@@ -15,17 +16,21 @@ namespace Training.UrlShortner.Functions.Services
         private readonly IRuntimeConfiguration _configuration;
         private readonly IRedisDatabaseFactory _redisDatabaseFactory;
         private readonly ILogger<GetAliasService> _logger;
+        private readonly TelemetryClient _telemetryClient;
 
-        public GetAliasService(IRuntimeConfiguration configuration, IRedisDatabaseFactory redisDatabaseFactory, ILogger<GetAliasService> logger)
+        public GetAliasService(IRuntimeConfiguration configuration, IRedisDatabaseFactory redisDatabaseFactory, ILogger<GetAliasService> logger, TelemetryClient telemetryClient)
         {
             _configuration = configuration;
             _redisDatabaseFactory = redisDatabaseFactory;
             _logger = logger;
+            _telemetryClient = telemetryClient;
         }
 
         public async Task<string> GetAliasAsync(string alias)
         {
             string result;
+
+            _telemetryClient.GetMetric("MethodUsage", "Method").TrackValue(1, "GetAlias");
 
             _logger.LogInformation("Fetching alias");
             using (var sqlConnection = new SqlConnection(_configuration.GetString("Database.ConnectionString")))

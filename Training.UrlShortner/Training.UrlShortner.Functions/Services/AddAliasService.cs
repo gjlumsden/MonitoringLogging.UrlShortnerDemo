@@ -28,6 +28,8 @@ namespace Training.UrlShortner.Functions.Services
 
         public async Task ExecuteAsync(AddAliasProperties requestContent, DateTime enqueuedTimeUtc)
         {
+            _telemetryClient.GetMetric("MethodUsage", "Method").TrackValue(1, "AddAlias");
+
             var intentionalDelay = Random.Next(3000);
             await Task.Delay(intentionalDelay);
 
