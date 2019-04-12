@@ -10,6 +10,7 @@
     <PackageReference Include="Microsoft.ApplicationInsights.NLogTarget" Version="2.9.1" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="1.0.24" />
     <PackageReference Include="NLog.Extensions.Logging" Version="1.3.0" />
+    <PackageReference Include="Seq.Client.NLog" Version="2.3.27" />
     <PackageReference Include="StackExchange.Redis" Version="2.0.571" />
     <PackageReference Include="System.Data.SqlClient" Version="4.6.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.ServiceBus" Version="3.0.3" />

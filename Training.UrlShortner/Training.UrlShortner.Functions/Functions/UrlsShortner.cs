@@ -39,6 +39,12 @@ namespace Training.UrlShortner.Functions.Functions
             }
 
             var result = await getAliasService.GetAliasAsync(req.Query["a"].First());
+
+            if (result == null)
+            {
+                return new NotFoundResult();
+            }
+
             return new RedirectResult(result);
         }
     }

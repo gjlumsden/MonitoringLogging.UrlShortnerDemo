@@ -25,7 +25,6 @@ namespace Training.UrlShortner.Functions.Services
 
         public async Task<string> GetAliasAsync(string alias)
         {
-            _logger.LogTrace("Starting");
             string result;
 
             _logger.LogInformation("Fetching alias");
@@ -45,7 +44,6 @@ namespace Training.UrlShortner.Functions.Services
                 redisConnection.HashIncrementAsync(alias, "requestCount"),
                 redisConnection.HashSetAsync(alias, "lastRequest", DateTime.UtcNow.ToString("O")));
 
-            _logger.LogTrace("Done");
                 return result;
         }
     }

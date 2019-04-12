@@ -6,6 +6,10 @@ using Microsoft.Extensions.Logging;
 using NLog;
 using NLog.Config;
 using NLog.Extensions.Logging;
+using NLog.Targets;
+using NLog.Targets.Wrappers;
+using Seq.Client.NLog;
+using StackExchange.Redis;
 using Training.UrlShortner.Functions.Functions;
 using Training.UrlShortner.Functions.Persistence;
 using Training.UrlShortner.Functions.Services;
@@ -19,10 +23,11 @@ namespace Training.UrlShortner.Functions.Configuration
         {
             DependencyInjection.Initialize((builder) =>
             {
-                ConfigureLogging(builder);
-                ConfigureMonitoring(builder);
+                var runtimeConfiguration = new RuntimeConfiguration();
+                builder.RegisterInstance(runtimeConfiguration).As<IRuntimeConfiguration>().SingleInstance();
 
-                builder.RegisterType<RuntimeConfiguration>().As<IRuntimeConfiguration>().SingleInstance();
+                ConfigureLogging(runtimeConfiguration, builder);
+                ConfigureMonitoring(builder);
 
                 builder.RegisterType<RedisDatabaseFactory>().As<IRedisDatabaseFactory>().SingleInstance();
                 builder.RegisterType<SqlConnectionFactory>().As<ISqlConnectionFactory>().SingleInstance();
@@ -34,24 +39,61 @@ namespace Training.UrlShortner.Functions.Configuration
             }, functionName);
         }
 
-        private void ConfigureLogging(ContainerBuilder builder)
+        private void ConfigureLogging(RuntimeConfiguration runtimeConfiguration, ContainerBuilder builder)
         {
-            builder.RegisterGeneric(typeof(Logger<>)).As(typeof(ILogger<>));
-            builder.RegisterType<NLogLoggerFactory>().AsImplementedInterfaces().InstancePerLifetimeScope();
-
             var configuration = new LoggingConfiguration();
 
-            var applicationInsightsTarget = new ApplicationInsightsTarget()
+            Target loggingTarget;
+            if (runtimeConfiguration.GetBool("UseSeq"))
             {
-                Name = "ApplicationInsights"
-            };
+                var seqTarget = new SeqTarget
+                {
+                    Name = "Seq",
+                    ServerUrl = "http://localhost:5341",
+                    Properties =
+                    {
+                        new SeqPropertyItem
+                        {
+                            Name = "MachineName",
+                            Value = "localhost",
+                        },
+                        new SeqPropertyItem
+                        {
+                            Name = "hostname",
+                            Value = "${hostname}",
+                        },
+                        new SeqPropertyItem
+                        {
+                            Name = "source",
+                            Value = "${callsite:fileName=true}",
+                        }
+                    },
+                };
 
-            configuration.AddTarget(applicationInsightsTarget);
+                loggingTarget = new BufferingTargetWrapper
+                {
+                    Name = "buffer",
+                    BufferSize = 1000,
+                    FlushTimeout = 2500,
+                    WrappedTarget = seqTarget
+                };
+            }
+            else
+            {
+                loggingTarget = new ApplicationInsightsTarget()
+                {
+                    Name = "ApplicationInsights"
+                };
+            }
 
-            configuration.AddRule(LogLevel.Warn, LogLevel.Fatal, applicationInsightsTarget, "Microsoft.*", true);
-            configuration.AddRule(LogLevel.Trace, LogLevel.Fatal, applicationInsightsTarget, "*", true);
+            configuration.AddTarget(loggingTarget);
+
+            configuration.AddRule(LogLevel.Warn, LogLevel.Fatal, loggingTarget, "Microsoft.*", true);
+            configuration.AddRule(LogLevel.Trace, LogLevel.Fatal, loggingTarget, "*", true);
 
             LogManager.Configuration = configuration;
+            builder.RegisterGeneric(typeof(Logger<>)).As(typeof(ILogger<>));
+            builder.RegisterType<NLogLoggerFactory>().AsImplementedInterfaces().InstancePerLifetimeScope();
         }
 
         private void ConfigureMonitoring(ContainerBuilder builder)

@@ -20,5 +20,10 @@ namespace Training.UrlShortner.Functions.Configuration
         {
             return _configuration[settingName];
         }
+
+        public bool GetBool(string settingName)
+        {
+            return bool.TryParse(_configuration[settingName], out var result) && result;
+        }
     }
 }
