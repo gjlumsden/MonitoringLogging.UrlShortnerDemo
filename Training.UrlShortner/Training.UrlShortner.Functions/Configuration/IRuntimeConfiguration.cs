@@ -1,6 +1,6 @@
 ﻿namespace Training.UrlShortner.Functions.Configuration
 {
-    internal interface IRuntimeConfiguration
+    public interface IRuntimeConfiguration
     {
         string GetString(string settingName);
     }

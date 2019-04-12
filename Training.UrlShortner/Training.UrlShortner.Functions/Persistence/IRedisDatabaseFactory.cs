@@ -2,7 +2,7 @@
 
 namespace Training.UrlShortner.Functions.Persistence
 {
-    internal interface IRedisDatabaseFactory
+    public interface IRedisDatabaseFactory
     {
         IDatabase GetDatabase();
     }

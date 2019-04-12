@@ -1,32 +1,40 @@
 ﻿using Autofac;
 using AzureFunctions.Autofac.Configuration;
+using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.NLogTarget;
 using Microsoft.Extensions.Logging;
 using NLog;
 using NLog.Config;
 using NLog.Extensions.Logging;
+using Training.UrlShortner.Functions.Functions;
 using Training.UrlShortner.Functions.Persistence;
 using Training.UrlShortner.Functions.Services;
 using LogLevel = NLog.LogLevel;
 
 namespace Training.UrlShortner.Functions.Configuration
 {
-    public class DIConfig
+    public class DiConfig
     {
-        public DIConfig(string functionName)
+        public DiConfig(string functionName)
         {
             DependencyInjection.Initialize((builder) =>
             {
-                builder.RegisterType<GetAliasService>().As<IGetAliasService>();
+                ConfigureLogging(builder);
+                ConfigureMonitoring(builder);
 
-                builder.RegisterType<RedisDatabaseFactory>().As<IRedisDatabaseFactory>().SingleInstance();
                 builder.RegisterType<RuntimeConfiguration>().As<IRuntimeConfiguration>().SingleInstance();
 
-                ConfigureLogging(builder);
+                builder.RegisterType<RedisDatabaseFactory>().As<IRedisDatabaseFactory>().SingleInstance();
+                builder.RegisterType<SqlConnectionFactory>().As<ISqlConnectionFactory>().SingleInstance();
+
+                builder.RegisterType<CleanUpService>().As<ICleanUpService>().InstancePerLifetimeScope();
+                builder.RegisterType<LoadGeneratorService>().As<ILoadGeneratorService>().InstancePerLifetimeScope();
+                builder.RegisterType<AddAliasService>().As<IAddAliasSerivce>().InstancePerLifetimeScope();
+                builder.RegisterType<GetAliasService>().As<IGetAliasService>().InstancePerLifetimeScope();
             }, functionName);
         }
 
-        private static void ConfigureLogging(ContainerBuilder builder)
+        private void ConfigureLogging(ContainerBuilder builder)
         {
             builder.RegisterGeneric(typeof(Logger<>)).As(typeof(ILogger<>));
             builder.RegisterType<NLogLoggerFactory>().AsImplementedInterfaces().InstancePerLifetimeScope();
@@ -44,6 +52,11 @@ namespace Training.UrlShortner.Functions.Configuration
             configuration.AddRule(LogLevel.Trace, LogLevel.Fatal, applicationInsightsTarget, "*", true);
 
             LogManager.Configuration = configuration;
+        }
+
+        private void ConfigureMonitoring(ContainerBuilder builder)
+        {
+            builder.RegisterType<TelemetryClient>().SingleInstance();
         }
     }
 }
