@@ -12,9 +12,9 @@ using Training.UrlShortner.Functions.Services;
 namespace Training.UrlShortner.Functions.Functions
 {
     [DependencyInjectionConfig(typeof(DiConfig))]
-    public static class UrlsShortner
+    public static class UrlShortner
     {
-        [FunctionName("UrlsShortner")]
+        [FunctionName("UrlShortner")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             [ServiceBus("%ServiceBus.AddAliasQueueName%", Connection = "ServiceBus.ConnectionString")] ICollector<string> messageBusCollector,
