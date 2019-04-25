@@ -24,14 +24,14 @@ namespace Training.UrlShortner.Functions.Services
             var alias = Guid.NewGuid().ToString();
             var url = "https://null.null/null";
 
-            await HttpClient.PostAsJsonAsync($"{baseUrl}/api/UrlsShortner", new AddAliasProperties
+            await HttpClient.PostAsJsonAsync($"{baseUrl}/api/UrlShortner", new AddAliasProperties
             {
                 Alias = alias,
                 Url = url
             });
 
             var tasks = Enumerable.Range(0, 5)
-                .Select(x => HttpClient.GetAsync($"{baseUrl}/api/UrlsShortner/?a={alias}"));
+                .Select(x => HttpClient.GetAsync($"{baseUrl}/api/UrlShortner/?a={alias}"));
 
             try
             {
